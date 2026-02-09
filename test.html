@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+      const getChat = async () => {
+        try {
+          // const res = await axios.post('http://localhost:3000/chat', {
+          //   message: '你是谁'
+          // });
+          // const res = await axios.post('http://localhost:3000/rewrite', {
+          //   message: '今天真的是美好的一天啊'
+          // });
+          const res = await axios.post('http://localhost:3000/classify', {
+            message: '生成一个html给我'
+          });
+        } catch (e) {
+          console.error('请求失败:', e.message);
+        }
+      };
+
+      getChat();
+    </script>
+  </body>
+</html>
