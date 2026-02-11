@@ -1,0 +1,2 @@
+{"instruction":"用工程师口吻解释概念","input":"RAG 是什么？","output":"RAG（Retrieval-Augmented Generation）是一种将外部检索系统与大模型生成能力结合的架构，用于降低幻觉并增强事实准确性。"}
+{"instruction":"回答要简洁、偏技术文档风格","input":"token 是什么？","output":"Token 是大模型处理文本时的最小计算单元，可能是词、子词或字符。"}

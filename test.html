@@ -1,32 +1,503 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>LLM Week1 · 接口测试</title>
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com" />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600;700&display=swap"
+      rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+      :root {
+        --bg: #0f0f12;
+        --surface: #18181c;
+        --surface-hover: #1f1f24;
+        --border: #2a2a30;
+        --text: #e4e4e7;
+        --text-muted: #a1a1aa;
+        --accent: #a78bfa;
+        --accent-dim: rgba(167, 139, 250, 0.15);
+        --success: #34d399;
+        --error: #f87171;
+        --radius: 12px;
+        --radius-sm: 8px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: 'Noto Sans SC', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        background-image:
+          radial-gradient(
+            ellipse 80% 50% at 50% -20%,
+            rgba(167, 139, 250, 0.12),
+            transparent
+          ),
+          radial-gradient(
+            ellipse 60% 40% at 100% 50%,
+            rgba(167, 139, 250, 0.06),
+            transparent
+          );
+      }
+
+      .container {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+      }
+
+      header {
+        margin-bottom: 2rem;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin: 0 0 0.25rem 0;
+      }
+
+      .subtitle {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        margin-bottom: 1.25rem;
+      }
+
+      .card-title {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-muted);
+        margin-bottom: 0.75rem;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.25rem;
+      }
+
+      .tab {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        font-family: inherit;
+        font-weight: 500;
+        color: var(--text-muted);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition:
+          color 0.2s,
+          border-color 0.2s,
+          background 0.2s;
+      }
+
+      .tab:hover {
+        color: var(--text);
+        border-color: var(--text-muted);
+      }
+
+      .tab.active {
+        color: var(--accent);
+        border-color: var(--accent);
+        background: var(--accent-dim);
+      }
+
+      .input-group {
+        margin-bottom: 1rem;
+      }
+
+      .input-group label {
+        display: block;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        margin-bottom: 0.35rem;
+      }
+
+      .input-group.inline {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .input-group.inline label {
+        margin-bottom: 0;
+        white-space: nowrap;
+      }
+
+      textarea,
+      input[type='text'] {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 0.9375rem;
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--text);
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        resize: vertical;
+        min-height: 100px;
+        transition: border-color 0.2s;
+      }
+
+      input[type='text'] {
+        min-height: auto;
+      }
+
+      textarea:focus,
+      input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      textarea::placeholder,
+      input::placeholder {
+        color: var(--text-muted);
+        opacity: 0.8;
+      }
+
+      .btn {
+        padding: 0.65rem 1.25rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        font-family: inherit;
+        color: var(--bg);
+        background: var(--accent);
+        border: none;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition:
+          opacity 0.2s,
+          transform 0.1s;
+      }
+
+      .btn:hover {
+        opacity: 0.92;
+      }
+
+      .btn:active {
+        transform: scale(0.98);
+      }
+
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .result-box {
+        min-height: 120px;
+        padding: 1rem 1.25rem;
+        font-size: 0.9375rem;
+        font-family: 'JetBrains Mono', monospace;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .result-box.empty {
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .result-box.error {
+        border-color: var(--error);
+        color: var(--error);
+      }
+
+      .result-box .answer-block {
+        margin-bottom: 1rem;
+      }
+
+      .result-box .answer-block:last-child {
+        margin-bottom: 0;
+      }
+
+      .result-box .label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        margin-bottom: 0.35rem;
+      }
+
+      .result-box .value {
+        color: var(--text);
+      }
+
+      .result-box .ref-item {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.875rem;
+      }
+
+      .result-box .ref-item:last-child {
+        border-bottom: none;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 0.2rem 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 6px;
+        background: var(--accent-dim);
+        color: var(--accent);
+      }
+
+      .status {
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+        margin-top: 0.75rem;
+      }
+
+      .status.loading {
+        color: var(--accent);
+      }
+
+      .status.error {
+        color: var(--error);
+      }
+    </style>
   </head>
   <body>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <div class="container">
+      <header>
+        <h1>LLM Week1</h1>
+        <p class="subtitle">对话 · 改写 · 分类 · RAG 接口测试</p>
+      </header>
+
+      <div class="card">
+        <div class="card-title">选择接口</div>
+        <div
+          class="tabs"
+          role="tablist">
+          <button
+            type="button"
+            class="tab active"
+            data-api="chat">
+            对话 /chat
+          </button>
+          <button
+            type="button"
+            class="tab"
+            data-api="rewrite">
+            改写 /rewrite
+          </button>
+          <button
+            type="button"
+            class="tab"
+            data-api="classify">
+            分类 /classify
+          </button>
+          <button
+            type="button"
+            class="tab"
+            data-api="rag">
+            RAG /rag
+          </button>
+        </div>
+
+        <div class="input-group">
+          <label for="message">内容</label>
+          <textarea
+            id="message"
+            placeholder="输入要发送的文本…">
+RAG 是什么？</textarea
+          >
+        </div>
+
+        <div
+          class="input-group inline"
+          id="styleGroup"
+          style="display: none">
+          <label for="style">风格</label>
+          <input
+            type="text"
+            id="style"
+            placeholder="自然"
+            value="自然" />
+        </div>
+
+        <button
+          type="button"
+          class="btn"
+          id="sendBtn">
+          发送请求
+        </button>
+        <p
+          class="status"
+          id="status"></p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">返回结果</div>
+        <div
+          class="result-box empty"
+          id="result">
+          暂无返回数据，点击「发送请求」调用接口
+        </div>
+      </div>
+    </div>
+
     <script>
-      const getChat = async () => {
-        try {
-          // const res = await axios.post('http://localhost:3000/chat', {
-          //   message: '你是谁'
-          // });
-          // const res = await axios.post('http://localhost:3000/rewrite', {
-          //   message: '今天真的是美好的一天啊'
-          // });
-          const res = await axios.post('http://localhost:3000/classify', {
-            message: '生成一个html给我'
-          });
-        } catch (e) {
-          console.error('请求失败:', e.message);
-        }
+      const API_BASE = 'http://localhost:3000';
+      const tabs = document.querySelectorAll('.tab');
+      const messageEl = document.getElementById('message');
+      const styleGroup = document.getElementById('styleGroup');
+      const styleEl = document.getElementById('style');
+      const sendBtn = document.getElementById('sendBtn');
+      const statusEl = document.getElementById('status');
+      const resultEl = document.getElementById('result');
+
+      const placeholders = {
+        chat: '输入你想问的问题…',
+        rewrite: '输入要改写的原文…',
+        classify: '输入待分类的文本…',
+        rag: '输入要基于文档回答的问题…'
       };
 
-      getChat();
+      let currentApi = 'chat';
+
+      tabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+          tabs.forEach((t) => t.classList.remove('active'));
+          tab.classList.add('active');
+          currentApi = tab.dataset.api;
+          messageEl.placeholder = placeholders[currentApi];
+          styleGroup.style.display = currentApi === 'rewrite' ? 'flex' : 'none';
+          resultEl.className = 'result-box empty';
+          resultEl.textContent = '暂无返回数据，点击「发送请求」调用接口';
+          statusEl.textContent = '';
+        });
+      });
+
+      function setStatus(text, type = '') {
+        statusEl.textContent = text;
+        statusEl.className = 'status ' + type;
+      }
+
+      function renderResult(data, isError = false) {
+        resultEl.classList.remove('empty', 'error');
+        if (isError) {
+          resultEl.classList.add('error');
+          resultEl.innerHTML = data.message || JSON.stringify(data);
+          return;
+        }
+
+        if (currentApi === 'chat') {
+          resultEl.innerHTML = `<div class="answer-block"><div class="label">回答</div><div class="value">${escapeHtml(data.answer || '')}</div></div>`;
+        } else if (currentApi === 'rewrite') {
+          resultEl.innerHTML = `<div class="answer-block"><div class="label">改写结果</div><div class="value">${escapeHtml(data.result || '')}</div></div>`;
+        } else if (currentApi === 'classify') {
+          const label = data.label != null ? data.label : '—';
+          const conf =
+            data.confidence != null
+              ? typeof data.confidence === 'number'
+                ? data.confidence.toFixed(2)
+                : data.confidence
+              : '—';
+          resultEl.innerHTML = `
+            <div class="answer-block">
+              <div class="label">分类</div>
+              <div class="value"><span class="badge">${escapeHtml(String(label))}</span></div>
+            </div>
+            <div class="answer-block">
+              <div class="label">置信度</div>
+              <div class="value">${escapeHtml(String(conf))}</div>
+            </div>
+          `;
+        } else if (currentApi === 'rag') {
+          let html = `<div class="answer-block"><div class="label">回答</div><div class="value">${escapeHtml(data.answer || '')}</div></div>`;
+          if (data.references && data.references.length) {
+            html +=
+              '<div class="answer-block"><div class="label">引用片段</div>';
+            data.references.forEach((ref, i) => {
+              html += `<div class="ref-item">${escapeHtml(ref)}</div>`;
+            });
+            html += '</div>';
+          }
+          resultEl.innerHTML = html;
+        } else {
+          resultEl.textContent = JSON.stringify(data, null, 2);
+        }
+      }
+
+      function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      sendBtn.addEventListener('click', async () => {
+        const message = messageEl.value.trim();
+        if (!message) {
+          setStatus('请先输入内容', 'error');
+          return;
+        }
+
+        sendBtn.disabled = true;
+        setStatus('请求中…', 'loading');
+        resultEl.className = 'result-box empty';
+        resultEl.textContent = '加载中…';
+
+        try {
+          let res;
+          if (currentApi === 'chat') {
+            res = await axios.post(`${API_BASE}/chat`, {message});
+          } else if (currentApi === 'rewrite') {
+            res = await axios.post(`${API_BASE}/rewrite`, {
+              message,
+              style: styleEl.value.trim() || '自然'
+            });
+          } else if (currentApi === 'classify') {
+            res = await axios.post(`${API_BASE}/classify`, {message});
+          } else {
+            res = await axios.post(`${API_BASE}/rag`, {message});
+          }
+          setStatus('请求成功');
+          renderResult(res.data);
+        } catch (e) {
+          const msg = e.response?.data?.message || e.message || '请求失败';
+          setStatus(msg, 'error');
+          renderResult({message: msg}, true);
+        } finally {
+          sendBtn.disabled = false;
+        }
+      });
     </script>
   </body>
 </html>
