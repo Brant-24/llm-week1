@@ -1,173 +1,346 @@
-# LLM Week1
+# 🚀 LLM Week1
 
-基于大语言模型的示例项目：提供对话、改写、分类、RAG 问答等 HTTP 接口，并支持 Qwen3-4B 的 LoRA 微调。适合作为 LLM 应用入门与实验。
-
----
-
-## 功能概览
-
-| 接口             | 说明                                              |
-| ---------------- | ------------------------------------------------- |
-| `POST /chat`     | 通用对话，简洁直接回答                            |
-| `POST /rewrite`  | 文案改写，可指定风格（如「自然」）                |
-| `POST /classify` | 文本分类，返回标签与置信度（技术/情感/广告/垃圾） |
-| `POST /rag`      | 基于本地文档的检索增强问答，带引用片段            |
+> 一个基于大语言模型的示例项目  
+> 提供对话、改写、分类、RAG 问答等 HTTP 接口，并支持 **Qwen3-4B LoRA 微调**。  
+> 适合作为 LLM 应用入门与实验项目。
 
 ---
 
-## 技术栈
+## ✨ 项目亮点
 
-- **后端**：Node.js + Koa + koa-router
-- **大模型**：通过 [Ollama](https://ollama.com/) 调用本地模型（默认 `qwen3:4b`）
-- **向量与 RAG**：Ollama `nomic-embed-text` 做向量化，内存向量库 + 余弦相似度检索，固定长度分块（默认 300 字）
-- **微调**：Python + Transformers + PEFT，Qwen3-4B + LoRA（4bit 量化，BitsAndBytes）
-
----
-
-## 环境准备
-
-1. **安装并启动 Ollama**（需先安装 [Ollama](https://ollama.com/)），并拉取模型：
-   ```bash
-   ollama pull qwen3:4b
-   ollama pull nomic-embed-text
-   ```
-
-2. **安装 Node 依赖**：
-   ```bash
-   npm install
-   ```
-
-3. **RAG 文档**：将需要被检索的文档内容放入 `docs/demo.txt`，启动服务时会自动加载、分块并向量化到内存。
+- 本地部署大模型（Ollama）
+- 完整 RAG 流程实现（Embedding + 向量检索 + 生成）
+- 支持 LoRA 微调（4bit 量化）
+- Node.js 后端 + Python 训练脚本
+- 结构清晰，适合学习与二次开发
 
 ---
 
-## 运行服务
+## 📦 功能概览
+
+| 接口             | 功能说明                              |
+| ---------------- | ------------------------------------- |
+| `POST /chat`     | 通用对话                              |
+| `POST /rewrite`  | 文案改写（支持风格指定）              |
+| `POST /classify` | 文本分类（技术 / 情感 / 广告 / 垃圾） |
+| `POST /rag`      | 基于本地文档的 RAG 问答               |
+
+---
+
+## 🧱 技术栈
+
+### 🖥 后端
+- Node.js
+- Koa
+- koa-router
+
+### 🤖 大模型
+- Ollama 本地模型调用
+- 默认模型：`qwen3:4b`
+
+### 📚 RAG 实现
+- Embedding 模型：`nomic-embed-text`
+- 固定长度分块（默认 300 字）
+- 内存向量库
+- 余弦相似度检索（Top 3）
+
+### 🧠 微调
+- Transformers
+- PEFT（LoRA）
+- 4bit 量化（BitsAndBytes）
+
+---
+
+## ⚙️ 环境准备
+
+### 1️⃣ 安装 Ollama
+
+安装：https://ollama.com/
+
+拉取模型：
+
+```bash
+ollama pull qwen3:4b
+ollama pull nomic-embed-text
+```
+
+---
+
+### 2️⃣ 安装 Node 依赖
+
+```bash
+npm install
+```
+
+---
+
+### 3️⃣ 准备 RAG 文档
+
+将需要检索的内容放入：
+
+```
+docs/demo.txt
+```
+
+服务启动时会自动：
+
+- 读取文档
+- 分块
+- 向量化
+- 存入内存向量库
+
+---
+
+## ▶️ 启动服务
 
 ```bash
 node index.js
 ```
 
-服务运行在 **http://localhost:3000**。启动时会输出「文档向量化完成」表示 RAG 文档已加载。
+访问地址：
 
----
-
-## API 说明与示例
-
-### 1. 对话 `POST /chat`
-
-**请求体**：`{ "message": "用户问题" }`
-
-**响应**：`{ "answer": "模型回复" }`
-
-```bash
-curl -X POST http://localhost:3000/chat -H "Content-Type: application/json" -d "{\"message\":\"你好\"}"
+```
+http://localhost:3000
 ```
 
-### 2. 改写 `POST /rewrite`
+启动成功后会输出：
 
-**请求体**：`{ "message": "原文", "style": "自然" }`（`style` 可选，默认 `"自然"`）
-
-**响应**：`{ "result": "改写后的文案" }`
-
-```bash
-curl -X POST http://localhost:3000/rewrite -H "Content-Type: application/json" -d "{\"message\":\"今天天气很好\",\"style\":\"正式\"}"
 ```
-
-### 3. 分类 `POST /classify`
-
-**请求体**：`{ "message": "待分类文本" }`
-
-**响应**：`{ "label": "技术"|"情感"|"广告"|"垃圾", "confidence": 0.95 }`  
-若模型输出不是合法 JSON，则返回 `{ "error": "...", "raw": "原始输出" }`。
-
-```bash
-curl -X POST http://localhost:3000/classify -H "Content-Type: application/json" -d "{\"message\":\"这款产品限时优惠\"}"
-```
-
-### 4. RAG 问答 `POST /rag`
-
-**请求体**：`{ "message": "你的问题" }`
-
-**响应**：`{ "answer": "基于文档的回答", "references": ["片段1", "片段2", ...] }`  
-仅根据 `docs/demo.txt` 内容回答；若资料中无答案，模型会回答「不知道」。
-
-```bash
-curl -X POST http://localhost:3000/rag -H "Content-Type: application/json" -d "{\"message\":\"文档里的某个问题\"}"
+文档向量化完成
 ```
 
 ---
 
-## RAG 流程简述
-
-1. **启动时**：`loadDocs.js` 读取 `docs/demo.txt` → `chunk.js` 按 300 字分块 → `embedding.js` 调用 Ollama 得到每块向量 → `vectorStore.js` 存入内存。
-2. **请求时**：用户问题先向量化，在向量库中按余弦相似度取 top 3 片段，拼进 prompt 再调用 `llm.js` 生成答案，并返回答案和引用片段。
+## 📡 API 示例
 
 ---
 
-## 前端快速测试
+### 🗨 1. 对话接口
 
-项目内 `test.html` 使用 axios 调用上述接口。用浏览器打开 `test.html`（或通过本地静态服务打开），并确保后端运行在 `http://localhost:3000`，修改其中 `axios.post` 的 URL 和 body 即可测试不同接口。
+#### `POST /chat`
+
+请求：
+
+```json
+{
+  "message": "你好"
+}
+```
+
+返回：
+
+```json
+{
+  "answer": "模型回复"
+}
+```
+
+测试：
+
+```bash
+curl -X POST http://localhost:3000/chat \
+-H "Content-Type: application/json" \
+-d "{\"message\":\"你好\"}"
+```
 
 ---
 
-## LoRA 微调
+### ✍️ 2. 改写接口
 
-基于 **Qwen/Qwen3-4B**，使用 **LoRA**（`q_proj`、`v_proj`，r=8）与 **4bit 量化** 进行微调。
+#### `POST /rewrite`
 
-### 数据格式
+请求：
 
-训练数据为 `data/train.jsonl`，每行一条 JSON：
+```json
+{
+  "message": "今天天气很好",
+  "style": "正式"
+}
+```
+
+返回：
+
+```json
+{
+  "result": "改写后的文案"
+}
+```
+
+---
+
+### 🏷 3. 分类接口
+
+#### `POST /classify`
+
+返回格式：
+
+```json
+{
+  "label": "技术",
+  "confidence": 0.95
+}
+```
+
+若输出非法 JSON：
+
+```json
+{
+  "error": "...",
+  "raw": "原始输出"
+}
+```
+
+---
+
+### 📚 4. RAG 问答接口
+
+#### `POST /rag`
+
+返回格式：
+
+```json
+{
+  "answer": "基于文档的回答",
+  "references": ["片段1", "片段2"]
+}
+```
+
+特点：
+
+- 仅基于 `docs/demo.txt`
+- 若无答案返回「不知道」
+
+---
+
+## 🔍 RAG 流程说明
+
+### 启动阶段
+
+```
+demo.txt
+   ↓
+分块（300 字）
+   ↓
+Embedding
+   ↓
+存入向量库
+```
+
+### 请求阶段
+
+```
+用户问题
+   ↓
+向量化
+   ↓
+相似度检索（Top3）
+   ↓
+拼接 Prompt
+   ↓
+LLM 生成答案
+```
+
+---
+
+## 🧪 前端快速测试
+
+项目内提供：
+
+```
+test.html
+```
+
+- 使用 axios 调用接口
+- 打开浏览器即可测试
+- 确保后端运行在 `localhost:3000`
+
+---
+
+## 🧠 LoRA 微调
+
+基于：
+
+```
+Qwen/Qwen3-4B
+```
+
+配置：
+
+- LoRA 作用层：`q_proj`、`v_proj`
+- r = 8
+- 4bit 量化
+
+---
+
+### 📄 数据格式
+
+`data/train.jsonl`
 
 ```json
 {"instruction":"用工程师口吻解释概念","input":"RAG 是什么？","output":"RAG（Retrieval-Augmented Generation）是..."}
 ```
 
-### Python 依赖
+---
 
-建议使用虚拟环境（如项目内 `llm-env`）：
+### 📦 安装 Python 依赖
+
+建议使用虚拟环境：
 
 ```bash
 pip install transformers peft datasets torch bitsandbytes
 ```
 
-### 训练
+---
+
+### 🚀 开始训练
 
 ```bash
 python train_lora_qwen3.py
 ```
 
-- 输出目录：`qwen3-lora/`，按 epoch 保存 checkpoint（如 `checkpoint-1`、`checkpoint-2`）。
-- 脚本内可调整：`per_device_train_batch_size`、`num_train_epochs`、`learning_rate` 等。
+输出目录：
+
+```
+qwen3-lora/
+```
+
+可在脚本内调整：
+
+- `num_train_epochs`
+- `learning_rate`
+- `per_device_train_batch_size`
 
 ---
 
-## 项目结构
+## 📁 项目结构
 
 ```
-├── index.js              # Koa 入口，注册路由，启动时 load 文档
-├── chat.js               # 对话
-├── rewrite.js            # 改写
-├── classify.js           # 分类
-├── rag.js                # RAG 问答
-├── llm.js                # 调用 Ollama /generate
-├── embedding.js          # 调用 Ollama /embeddings
-├── vectorStore.js        # 内存向量库、余弦相似度检索
-├── loadDocs.js           # 加载 docs、分块、向量化
-├── chunk.js              # 固定长度分块
+├── index.js
+├── chat.js
+├── rewrite.js
+├── classify.js
+├── rag.js
+├── llm.js
+├── embedding.js
+├── vectorStore.js
+├── loadDocs.js
+├── chunk.js
 ├── data/
-│   └── train.jsonl       # LoRA 训练数据
+│   └── train.jsonl
 ├── docs/
-│   └── demo.txt          # RAG 使用的文档
-├── train_lora_qwen3.py   # LoRA 训练脚本
-├── qwen3-lora/           # 训练得到的 LoRA 权重（checkpoint-*）
-├── test.html             # 前端接口测试页
+│   └── demo.txt
+├── train_lora_qwen3.py
+├── qwen3-lora/
+├── test.html
 └── package.json
 ```
 
 ---
 
-## 注意事项
+## ⚠️ 注意事项
 
-- 所有生成类接口依赖 **Ollama 已启动** 且已拉取 `qwen3:4b`；RAG 还需 `nomic-embed-text`。
-- 向量库为**内存存储**，重启服务后需重新加载文档。
-- 分类接口依赖模型输出为 JSON，若格式不稳定可在 prompt 或后处理中再约束或容错。
+- 必须保证 Ollama 已启动
+- 已拉取 `qwen3:4b`
+- RAG 需要 `nomic-embed-text`
+- 向量库存储在内存，重启会重新加载
+- 分类接口依赖模型输出 JSON，必要时可加强 prompt 约束
